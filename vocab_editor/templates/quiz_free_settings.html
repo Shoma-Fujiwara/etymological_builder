@@ -1,0 +1,77 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>自由テスト設定</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 650px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        label {
+            display: block;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        select, button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            font-size: 16px;
+        }
+        button {
+            margin-top: 30px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    {% include 'nav.html' %}
+    <h1>自由テスト設定</h1>
+
+    <form action="/quiz/free" method="post">
+        <label for="mode">出題方式</label>
+        <select id="mode" name="mode">
+            <option value="recommended">おすすめ出題</option>
+            <option value="selected">範囲指定</option>
+        </select>
+
+        <label for="scope">出題範囲</label>
+        <select id="scope" name="scope">
+            <option value="all">全単語</option>
+            <option value="chapter">Chapter指定</option>
+            <option value="stack">Stack指定</option>
+            <option value="incorrect">間違えた単語</option>
+        </select>
+
+        <label for="chapter">Chapter番号</label>
+        <select id="chapter" name="chapter">
+            {% for chapter in chapters %}
+            <option value="{{ chapter }}">{{ chapter }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="stack">Stack番号</label>
+        <select id="stack" name="stack">
+            {% for stack in stacks %}
+            <option value="{{ stack }}">{{ stack }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="question_count">問題数</label>
+        <select id="question_count" name="question_count">
+            <option value="5">5問</option>
+            <option value="10" selected>10問</option>
+            <option value="20">20問</option>
+            <option value="all">全問</option>
+        </select>
+
+        <button type="submit">テスト開始</button>
+    </form>
+
+    <p><a href="/">登録画面に戻る</a></p>
+</body>
+</html>

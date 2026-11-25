@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>テスト選択</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            color: #333;
+        }
+        main {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .card {
+            display: block;
+            background: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #333;
+        }
+        .card:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+        .card h2 {
+            color: #2563eb;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    {% include 'nav.html' %}
+
+    <main>
+        <h1>テスト</h1>
+        <p>テストの種類を選択してください。</p>
+
+        <a class="card" href="{{ url_for('quiz_today') }}">
+            <h2>振り返りテスト</h2>
+            <p>確認済みで、まだ振り返りテストに回答していない単語を出題します。</p>
+        </a>
+
+        <a class="card" href="{{ url_for('quiz_free_settings') }}">
+            <h2>自由テスト</h2>
+            <p>問題数や出題範囲を選択してテストを行います。</p>
+        </a>
+    </main>
+</body>
+</html>

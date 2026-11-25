@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>英単語学習システム</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            color: #333;
+        }
+        main {
+            max-width: 1000px;
+            margin: 60px auto;
+            padding: 20px;
+        }
+        .menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .card {
+            display: block;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            text-decoration: none;
+            color: #333;
+        }
+        .card:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+        .card h2 {
+            color: #2563eb;
+            margin-top: 0;
+        }
+        .disabled {
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    {% include 'nav.html' %}
+<main>
+    <h1>英単語学習システム</h1>
+    <p>学習する機能を選択してください。</p>
+
+    <div class="menu">
+
+        <a class="card" href="{{ url_for('index') }}">
+            <h2>教材登録</h2>
+            <p>英単語や語源を登録し、自分の教材を作成する。</p>
+        </a>
+
+        <a class="card" href="{{ url_for('quiz_menu') }}">
+            <h2>テスト</h2>
+            <p>登録した英単語の理解度を確認する。</p>
+        </a>
+
+        <a class="card" href="{{ url_for('incorrect') }}">
+            <h2>誤答集</h2>
+            <p>間違えた単語の意味や語源を確認する。</p>
+        </a>
+
+        <a class="card" href="{{ url_for('network') }}">
+            <h2>語源ネットワーク</h2>
+            <p>語源を通じた単語同士のつながりを確認する。</p>
+        </a>
+
+        <a class="card" href="{{ url_for('learning') }}">
+            <h2>学習記録</h2>
+            <p>学習の進捗やテスト成績を確認する。</p>
+        </a>
+
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,192 @@
+/* 全体 */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", "Noto Sans JP", sans-serif;
+    background: #f3f6fb;
+    color: #1e293b;
+    max-width: 960px;
+    margin: 40px auto;
+    padding: 0 20px;
+    line-height: 1.6;
+}
+
+/* 見出し */
+h1 {
+    color: #1d4ed8;
+    font-size: 28px;
+    margin-bottom: 24px;
+}
+
+h2, h3 {
+    color: #334155;
+}
+
+/* フォーム全体 */
+form {
+    background: white;
+    padding: 30px;
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* 入力欄 */
+label {
+    display: block;
+    font-weight: 600;
+    margin-top: 14px;
+    margin-bottom: 5px;
+}
+
+input, select {
+    width: 100%;
+    padding: 11px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    font-size: 15px;
+    background: white;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #2563eb;
+}
+
+/* 単語ごとのカード */
+.word-block {
+    background: #f8fafc;
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    padding: 22px;
+    margin: 24px 0;
+}
+
+/* 品詞・構成要素・派生語 */
+.pos-row, .part-row, .derivative-row {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px;
+    margin: 12px 0;
+}
+
+/* ボタン */
+button {
+    cursor: pointer;
+    border: none;
+    border-radius: 7px;
+    padding: 10px 16px;
+    margin: 8px 5px 8px 0;
+    background: #e2e8f0;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+button:hover {
+    filter: brightness(0.95);
+}
+
+/* 登録ボタン */
+button[type="submit"] {
+    background: #2563eb;
+    color: white;
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    margin-top: 24px;
+}
+
+/* 登録済みデータ */
+body > ul {
+    background: white;
+    padding: 24px 40px;
+    border-radius: 12px;
+}
+
+/* 入力項目の間隔を統一 */
+form > label {
+    margin-top: 16px;
+}
+
+form > input,
+form > select {
+    margin-bottom: 8px;
+}
+
+/* 不要な大きな余白を防ぐ */
+form br {
+    display: none;
+}
+
+/* セクションの区切り */
+.word-block {
+    margin-top: 24px;
+    margin-bottom: 24px;
+}
+
+/* 保存済みStack一覧 */
+.stack-list {
+    list-style: none;
+    padding: 0;
+}
+
+.stack-list li {
+    background: white;
+    padding: 15px 20px;
+    margin-bottom: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.stack-list a {
+    display: block;
+    color: #1d4ed8;
+    text-decoration: none;
+}
+
+.stack-list a:hover {
+    text-decoration: underline;
+}⏎  
+
+/* 登録済み単語一覧：単語ごとの区切りを明確にする */
+.registered-word-list {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0 28px;
+}
+.registered-word-card {
+    background: #fff;
+    border: 1px solid #dbe3ef;
+    border-left: 5px solid #2563eb;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 0 0 20px;
+    box-shadow: 0 3px 12px rgba(30, 41, 59, 0.04);
+}
+.registered-word-heading {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.registered-word-name {
+    font-size: 22px;
+    font-weight: 750;
+    color: #1d4ed8;
+}
+.registered-word-role {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 3px 10px;
+    background: #eaf0ff;
+    color: #1e40af;
+    font-size: 12px;
+    font-weight: 700;
+}
+.registered-word-card > ul { margin: 8px 0 12px; }
+.registered-word-card > p { margin: 12px 0 4px; font-weight: 600; }

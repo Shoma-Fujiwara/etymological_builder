@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>誤答集</title>
+    <style>
+        .chapter-group > h2 {
+            background: #e0ecff;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: #1e40af;
+        }
+        .stack-group {
+            margin: 20px 0;
+        }
+        .word-card {
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 12px 0;
+            background: white;
+        }
+        .word-card > h3 {
+            font-size: 24px;
+            color: #1e3a5f;
+            margin: 0;
+        }
+        .parts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 12px 0 20px;
+        }
+        .part {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 10px 20px;
+            text-align: center;
+        }
+        .part strong {
+            display: block;
+            font-size: 20px;
+            color: #2563eb;
+        }
+        .part span {
+            display: block;
+            margin-top: 5px;
+        }
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background: #f7f8fa;
+        }
+        main {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 24px;
+            background: white;
+            border-radius: 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 14px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background: #f1f5f9;
+        }
+        button {
+            padding: 12px 20px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .count {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        .network-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 16px;
+            background: #2563eb;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+        }
+        .network-link:hover {
+            background: #1d4ed8;
+        }
+        .filter-area {
+            margin: 24px 0;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .filter-buttons button {
+            background: white;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            padding: 10px 16px;
+        }
+        .filter-buttons button:hover {
+            background: #e0ecff;
+        }
+        .filter-buttons button.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+        #visibleCount {
+            color: #64748b;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    {% include 'nav.html' %}
+
+    <main>
+        <h1>誤答集</h1>
+        <p>間違えた単語を復習しましょう。</p>
+        <p>2回連続で正解すると誤答集から除外されます。</p>
+
+        <p>現在の復習対象</p>
+        <div class="count">{{ words|length }} 語</div>
+
+        {% if words %}
+        <div class="filter-area">
+            <h3>Chapter選択</h3>
+            <div id="chapterButtons" class="filter-buttons">
+                <button type="button" class="active" data-value="all">
+                    全章
+                </button>
+                {% for chapter in grouped %}
+                <button type="button" data-value="{{ chapter }}">
+                    Chapter {{ chapter }}
+                </button>
+                {% endfor %}
+            </div>
+
+            <h3>Stack選択</h3>
+            <div id="stackButtons" class="filter-buttons"></div>
+        </div>
+
+        <p id="visibleCount"></p>
+        {% for chapter, stacks in grouped.items() %}
+        <section class="chapter-group" data-chapter="{{ chapter }}">
+            <h2>Chapter {{ chapter }}</h2>
+
+            {% for stack, stack_words in stacks.items() %}
+            <section class="stack-group" data-stack="{{ stack }}">
+                <h3>Stack {{ stack }}（{{ stack_words|length }}語）</h3>
+
+                {% for word in stack_words %}
+                <div class="word-card">
+                    <h3>{{ word.word }}</h3>
+                    <p>{{ word.answers|join('、') }}</p>
+
+                    <strong>構成要素</strong>
+                    <div class="parts">
+                        {% for part in word.parts %}
+                        <div class="part">
+                            <strong>{{ part.form }}</strong>
+                            <span>{{ part.meaning }}</span>
+                        </div>
+                        {% else %}
+                        <p>未登録</p>
+                        {% endfor %}
+                    </div>
+
+                    {% if word.derivatives %}
+                    <strong>派生語</strong>
+                    {% for derivative in word.derivatives %}
+                    <p>{{ derivative.word }}：{{ derivative.meaning }}</p>
+                    {% endfor %}
+                    {% endif %}
+                    <a class="network-link"
+   href="{{ url_for('network', chapter=word.chapter, stack=word.stack, word=word.word) }}">
+    語源ネットワークで確認 →
+</a>
+                </div>
+                {% endfor %}
+            </section>
+            {% endfor %}
+        </section>
+        {% endfor %}
+
+        <form action="{{ url_for('quiz_free') }}" method="POST">
+            <input type="hidden" name="mode" value="selected">
+            <input type="hidden" name="scope" value="incorrect">
+            <input type="hidden" name="question_count" value="all">
+            <button type="submit">誤答集の単語をテストする</button>
+        </form>
+
+        {% else %}
+        <p>現在、誤答集の対象単語はありません。</p>
+        {% endif %}
+    </main>
+
+    <script>
+    const chapterButtons = document.getElementById('chapterButtons');
+    const stackButtons = document.getElementById('stackButtons');
+    const chapterGroups = document.querySelectorAll('.chapter-group');
+
+    let selectedChapter = 'all';
+    let selectedStack = 'all';
+
+    function updateDisplay() {
+        let count = 0;
+
+        chapterGroups.forEach(chapter => {
+            const chapterMatch =
+                selectedChapter === 'all' ||
+                chapter.dataset.chapter === selectedChapter;
+
+            chapter.hidden = !chapterMatch;
+
+            chapter.querySelectorAll('.stack-group').forEach(stack => {
+                const stackMatch =
+                    selectedStack === 'all' ||
+                    stack.dataset.stack === selectedStack;
+
+                stack.hidden = !stackMatch;
+
+                if (chapterMatch && stackMatch) {
+                    count += stack.querySelectorAll('.word-card').length;
+                }
+            });
+        });
+
+        document.getElementById('visibleCount').textContent =
+            `表示中：${count}語`;
+    }
+
+    function updateStackButtons() {
+        stackButtons.replaceChildren();
+
+        const stacks = new Map();
+
+        chapterGroups.forEach(chapter => {
+            if (selectedChapter !== 'all' &&
+                chapter.dataset.chapter !== selectedChapter) return;
+
+            chapter.querySelectorAll('.stack-group').forEach(stack => {
+                stacks.set(
+                    stack.dataset.stack,
+                    stack.querySelectorAll('.word-card').length
+                );
+            });
+        });
+
+        function addButton(value, label) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = label;
+            button.classList.toggle('active', value === selectedStack);
+
+            button.addEventListener('click', () => {
+                selectedStack = value;
+                updateStackButtons();
+                updateDisplay();
+            });
+
+            stackButtons.append(button);
+        }
+
+        addButton('all', '全Stack');
+
+        stacks.forEach((count, stack) => {
+            addButton(stack, `${stack}（${count}語）`);
+        });
+    }
+
+    if (chapterButtons) {
+        chapterButtons.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', () => {
+                selectedChapter = button.dataset.value;
+                selectedStack = 'all';
+
+                chapterButtons.querySelectorAll('button').forEach(b => {
+                    b.classList.toggle('active', b === button);
+                });
+
+                updateStackButtons();
+                updateDisplay();
+            });
+        });
+
+        updateStackButtons();
+        updateDisplay();
+    }
+    </script>
+</body>
+</html>

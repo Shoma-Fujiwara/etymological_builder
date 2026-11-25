@@ -1,0 +1,133 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>語源ネットワーク</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; background: #f7f8fa; }
+    header { padding: 16px 24px; background: white; border-bottom: 1px solid #ddd; }
+    header a { margin-right: 20px; }
+    .toolbar { padding: 14px 24px; display: flex; align-items: center; gap: 16px; }
+    #graph { width: 100%; height: 90vh; background: white; }
+    .edge { stroke: #a5b4c4; stroke-width: 2; }
+    .node { cursor: pointer; }
+    .node circle { fill: #e0ecff; stroke: #4676b8; stroke-width: 2; }
+    .node.unverified-word circle { fill: #fff7ed; stroke: #e8a65c; stroke-dasharray: 5 4; }
+    .node.chapter-main circle { fill: #2563eb; stroke: #1d4ed8; stroke-width: 3; }
+    .node.chapter-main text.node-label { fill: white; font-weight: bold; }
+    .node.center:not(.chapter-main) circle { fill: #2563eb; }
+    .node.center:not(.chapter-main) text.node-label { fill: white; font-weight: bold; }
+    .node text { text-anchor: middle; dominant-baseline: middle; }
+    .node.center text { fill: white; font-weight: bold; }
+    #detail { padding: 12px 24px; }
+    .node {
+      touch-action: none;
+      user-select: none;
+    }
+
+    .node:active {
+      cursor: grabbing;
+    }
+        
+    #detail {
+      margin: 16px 24px;
+      padding: 20px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+    }
+
+    #detail h2 {
+      margin-top: 0;
+    }
+
+    #detail h3 {
+      margin-bottom: 6px;
+      font-size: 15px;
+    }
+
+    #detail ul {
+      margin-top: 6px;
+    }
+        
+    #stackFilter { padding: 9px 12px; border: 1px solid #ccc; border-radius: 8px; background: white; }
+    #stackInventory { margin: 12px 24px; padding: 16px 20px; border: 1px solid #ddd; border-radius: 12px; background: white; }
+    #stackInventory h2 { margin: 0 0 8px; font-size: 18px; }
+    #stackInventory .word-button { margin: 4px; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; cursor: pointer; }
+    #stackInventory .unlinked { border-color: #e8a65c; background: #fff7ed; }
+    #stackInventory .stack-group { margin: 12px 0; }
+    #stackInventory .stack-group strong { display: block; margin-bottom: 4px; }
+    #chapterFilter { padding: 9px 12px; border: 1px solid #ccc; border-radius: 8px; background: white; }
+    #nodeSearch {
+      padding: 9px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      min-width: 200px;
+    }
+
+    #searchButton, #searchResults {
+      padding: 9px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .toolbar {
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  {% if request.args.get('mode') != 'quiz' %}
+    {% include 'nav.html' %}
+    <header>
+      <a href="/">単語一覧に戻る</a>
+      <strong>語源ネットワーク</strong>
+    </header>
+  {% endif %}
+
+    
+  <div class="toolbar">
+    <button id="back">← 戻る</button>
+    <span id="current"></span>
+    <label for="chapterFilter">表示する章</label>
+    <select id="chapterFilter" aria-label="表示する章">
+      <option value="all">全章</option>
+    </select>
+
+    <label for="stackFilter">Stack</label>
+    <select id="stackFilter" aria-label="表示するStack">
+      <option value="all">すべてのStack</option>
+    </select>
+    <input
+      type="search"
+      id="nodeSearch"
+      placeholder="単語・語幹を検索"
+      autocomplete="off"
+    >
+    <button id="searchButton">検索</button>
+    <select id="searchResults" aria-label="検索結果">
+      <option value="">検索結果を選択</option>
+    </select>
+  </div>
+
+
+  <svg id="graph" viewBox="0 0 1000 650"></svg>
+
+  <aside id="detail">
+      <h2>単語の詳細</h2>
+      <p>ノードを選択すると情報が表示されます。</p>
+  </aside>
+
+  <section id="stackInventory" aria-live="polite"></section>
+
+
+  <script>
+    const network = {{ network | tojson }};
+  </script>
+  <script src="{{ url_for('static', filename='network_usage.js') }}"></script>
+  <script src="{{ url_for('static', filename='network.js') }}"></script>
+</body>
+</html>
+

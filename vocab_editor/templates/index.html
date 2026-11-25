@@ -1,0 +1,886 @@
+(.venv) shoma@LAPTOP-EK9TT0H7 ~/etymological_builder (main)> cd ~/ety
+mological_builder
+                                                             cat voca
+b_editor/templates/index.html
+                                                             cat voca
+b_editor/static/style.css
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>英単語登録システム</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% include 'nav.html' %}
+    <h1>英単語登録システム</h1>
+
+    <!-- 入力フォーム -->
+
+{% if edit_file %}<h2>Stackを編集中：{{ vocab.stack }} / {{ vocab.main_word }}</h2>{% endif %}
+
+<form id="vocab-editor-form"
+      data-activity-type="{{ 'editing' if edit_file else 'registration' }}"
+      method="POST"
+      {% if edit_file %}action="{{ url_for('edit_stack', file=edit_file) }}"{% endif %}>
+
+    <!-- Chapter -->
+    <label for="chapter">Chapter番号</label>
+    <input type="number" id="chapter" name="chapter" min="1">
+
+    <br><br>
+
+
+    <!-- 接頭辞 -->
+    <br><br>
+    <label for="prefix">接頭辞</label>
+    <input type="text" id="prefix" name="prefix"
+        placeholder="例：con-, com-, co-">
+
+    <br><br>
+
+    <!-- 接頭辞の意味 -->
+    <label for="prefix_meaning">接頭辞の意味</label>
+    <input type="text" id="prefix_meaning" name="prefix_meaning"
+        placeholder="例：共に">
+
+
+    <!-- Stack -->
+    <label for="stack">Stack番号</label>
+    <input type="text" id="stack" name="stack"
+           placeholder="例：2-1">
+
+    <br><br>
+
+    <!-- メイン単語 -->
+    <label for="main_word">メイン単語</label>
+    <input type="text" id="main_word" name="main_word">
+
+    <br><br>
+
+    <!-- Stackの語根情報 -->
+    <h3>Stackの語根情報</h3>
+
+    <label for="root_forms">語根の表記（カンマ区切り）</label>
+    <input type="text"
+        id="root_forms"
+        name="root_forms"
+        placeholder="例：par, pare, pair">
+
+    <br><br>
+
+    <label for="root_meanings">語根の意味（カンマ区切り）</label>
+    <input type="text"
+        id="root_meanings"
+        name="root_meanings"
+        placeholder="例：並べる, そばに">
+
+    <br><br>
+
+    <!-- 単語入力エリア -->
+    <div id="words-container">
+        <div class="word-block" data-word-index="0">
+
+    <!-- 英単語 -->
+    <label for="word">英単語</label>
+    <input type="text" id="word" name="word">
+
+
+    <br><br>
+
+    <!-- 単語の役割 -->
+    <label for="role">単語の役割</label>
+    <select id="role" name="role">
+        <option value="main">メイン単語（main）</option>
+        <option value="related">関連単語（related）</option>
+    </select>
+
+
+
+        <br><br>
+
+
+
+<!-- 品詞と意味 -->
+<h3>品詞と意味</h3>
+
+<div class="pos-container">
+    <div class="pos-row">
+        <label>品詞</label>
+        <select name="part_of_speech_0">
+            <option value="verb">動詞（verb）</option>
+            <option value="noun">名詞（noun）</option>
+            <option value="adjective">形容詞（adjective）</option>
+            <option value="adverb">副詞（adverb）</option>
+        </select>
+
+        <div class="meanings-container">
+            <div class="meaning-row">
+                <input type="text" name="meaning_0[]"
+                       placeholder="例：改革する">
+            </div>
+        </div>
+
+        <button type="button" onclick="addMeaning(this)">
+            ＋ 意味を追加
+        </button>
+    </div>
+</div>
+
+<br>
+
+<button type="button" onclick="addPOS(this)">
+    ＋ 品詞を追加
+</button>
+
+
+
+
+    <br><br>
+
+
+    <!-- 語の構成 -->
+    <h3>語の構成（parts）</h3>
+
+    <div class="parts-container">
+        <div class="part-row">
+            <label>構成要素</label>
+            <input type="text" name="part_form[]"
+                placeholder="例：con">
+
+            <label>意味</label>
+            <input type="text" name="part_meaning[]"
+                placeholder="例：共に">
+        </div>
+    </div>
+
+    <br>
+
+    <button type="button" onclick="addPart(this)">
+        ＋ 構成要素を追加
+
+    </button>
+    <!-- 派生語 -->
+    <h3>派生語（derivatives）</h3>
+
+    <div class="derivatives-container">
+    </div>
+
+    <button type="button" onclick="addDerivative(this)">
+        ＋ 派生語を追加
+    </button>
+
+            </div>
+    </div>
+
+    <br>
+
+    <button type="button" onclick="addWord()">
+        ＋ 単語を追加
+    </button>
+
+        <br><br>
+
+        <button type="submit">{{ "変更を保存" if edit_file else "登録" }}</button>
+        {% if edit_file %}<a href="{{ url_for('index', file=edit_file) }}">編集をキャンセル</a>{% endif %}
+        </form>
+
+    {% if edit_file %}
+    <form method="POST"
+          action="{{ url_for('delete_stack') }}"
+          onsubmit="return confirm('このStackと所属する全単語を削除します。本当によろしいですか？');">
+
+        <input type="hidden" name="file" value="{{ edit_file }}">
+
+        <button type="submit" style="background-color: #dc2626; color: white;">
+            Stack全体を削除
+        </button>
+    </form>
+    {% endif %}
+
+    {% if edit_file or request.args.get("file") %}
+        {% set current_file = edit_file or request.args.get("file") %}
+
+        <div class="verification-section">
+            <h3>登録内容の確認</h3>
+
+            <p>
+                参考書と照合し、登録内容に間違いがないことを
+                確認してからボタンを押してください。
+            </p>
+
+            {% set words = vocab.get("words", []) if vocab else [] %}
+            {% set verified_count = words
+                | selectattr("verified", "equalto", true)
+                | list | length %}
+
+            <p>
+                登録単語数：{{ words | length }}語
+                ／ 確認済み：{{ verified_count }}語
+            </p>
+
+            {% if words and verified_count == (words | length) %}
+                <p style="color: green; font-weight: bold;">
+                    ✓ このStackは確認済みです
+                </p>
+            {% else %}
+                <p style="color: orange; font-weight: bold;">
+                    未確認の単語があります
+                </p>
+            {% endif %}
+
+            {% if verified_count < (words | length) %}
+
+            <form method="POST"
+                action="{{ url_for('verify_stack') }}">
+
+                <input type="hidden"
+                    name="file"
+                    value="{{ current_file }}">
+
+                <button type="submit"
+                        onclick="return confirm('このStackのすべての単語を確認済みにしますか？')">
+                    このStackを確認済みにする
+                </button>
+
+            </form>
+
+            {% endif %}
+        </div>
+    {% endif %}
+
+<hr>
+
+<!-- 登録済み単語一覧 -->
+
+    <hr>
+
+    <!-- 登録済み単語一覧 -->
+    <h2>登録済み単語一覧</h2>
+
+    <p>Chapter: {{ vocab.chapter }}</p>
+    <p>Stack: {{ vocab.stack }}</p>
+    <p>メイン単語: {{ vocab.main_word }}</p>
+
+    <h3>単語一覧</h3>
+
+    <ul class="registered-word-list">
+        {% for item in vocab.words %}
+            <li class="registered-word-card">
+                <div class="registered-word-heading">
+                    <strong class="registered-word-name">{{ item.word }}</strong>
+                    <span class="registered-word-role">{{ item.role }}</span>
+                </div>
+
+                <!-- 品詞と意味 -->
+                <ul>
+                    {% for part_of_speech, meanings in item.meanings.items() %}
+                        <li>
+                            {{ part_of_speech }}：
+                            {{ meanings | join("、") }}
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                <!-- 語の構成 -->
+                <p>語の構成：</p>
+                <ul>
+                    {% for part in item.parts %}
+                        <li>
+                            {{ part.form }}：{{ part.meaning }}
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                <!-- 派生語 -->
+                {% if item.derivatives %}
+                    <p>派生語：</p>
+                    <ul>
+                        {% for derivative in item.derivatives %}
+                            <li>
+                                {{ derivative.word }}：{{ derivative.meaning }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+            </li>
+        {% endfor %}
+    </ul>
+
+
+
+<hr>
+
+<h2>教材構築の進捗</h2>
+
+<p>登録Stack数：{{ total_stacks | default(0) }}</p>
+
+<p>登録単語数：{{ total_words | default(0) }}語</p>
+
+<p>確認済み単語数：{{ total_verified | default(0) }}語</p>
+
+<p>単語の確認率：{{ verification_rate | default(0) }}%</p>
+
+<div style="width: 100%; max-width: 500px;
+            background-color: #ddd;
+            border-radius: 8px;
+            overflow: hidden;">
+
+    <div style="width: {{ verification_rate | default(0) }}%;
+                height: 20px;
+                background-color: #4caf50;">
+    </div>
+
+</div>
+
+<hr>
+
+<h2>登録済みStack一覧</h2>
+
+{% if stack_list %}
+    <ul class="stack-list">
+        {% for item in stack_list %}
+
+            <li>
+                <a href="{{ url_for('index', file=item.path) }}">
+                    <strong>Chapter {{ item.chapter }}</strong>
+                    ｜ Stack {{ item.stack }}
+                    ｜ {{ item.main_word }}
+                </a>
+
+                <span>
+                    （登録：{{ item.word_count | default(0) }}語
+                    ／ 確認済み：{{ item.verified_count | default(0) }}語）
+                </span>
+
+                {% if item.word_count | default(0) > 0
+                    and item.verified_count | default(0) == item.word_count %}
+                    <strong style="color: green;">✓ 確認済み</strong>
+                {% else %}
+                    <strong style="color: orange;">未確認あり</strong>
+                {% endif %}
+
+                <a href="{{ url_for('edit_stack', file=item.path) }}">［編集］</a>
+            </li>
+
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>登録済みStackはありません。</p>
+{% endif %}
+
+
+<script>
+const editData = {{ edit_data | tojson if edit_data is defined else 'null' }};
+let wordCount = 1;
+let posCount = 1;
+
+// 単語ごとに入力欄を区別する
+
+function setupWord(block, wordIndex) {
+    block.dataset.wordIndex = wordIndex;
+
+    block.querySelectorAll("[name]").forEach(element => {
+        const name = element.name;
+
+        if (name === "word" || /^words\[\d+\]\[word\]$/.test(name)) {
+            element.name = `words[${wordIndex}][word]`;
+
+        } else if (name === "role" || /^words\[\d+\]\[role\]$/.test(name)) {
+            element.name = `words[${wordIndex}][role]`;
+
+        } else if (name === "part_form[]" || /\[part_form\]\[\]$/.test(name)) {
+            element.name = `words[${wordIndex}][part_form][]`;
+
+        } else if (name === "part_meaning[]" || /\[part_meaning\]\[\]$/.test(name)) {
+            element.name = `words[${wordIndex}][part_meaning][]`;
+
+        } else if (name === "derivative_word[]" || /\[derivative_word\]\[\]$/.test(name)) {
+            element.name = `words[${wordIndex}][derivative_word][]`;
+
+        } else if (name === "derivative_meaning[]" || /\[derivative_meaning\]\[\]$/.test(name)) {
+            element.name = `words[${wordIndex}][derivative_meaning][]`;
+
+        } else if (name.startsWith("part_of_speech_")) {
+            const posIndex = name.split("_").pop();
+            element.name = `words[${wordIndex}][pos_${posIndex}]`;
+
+        } else if (/^words\[\d+\]\[pos_\d+\]$/.test(name)) {
+            const posIndex = name.match(/pos_(\d+)/)[1];
+            element.name = `words[${wordIndex}][pos_${posIndex}]`;
+
+        } else if (name.startsWith("meaning_")) {
+            const posIndex = name.match(/\d+/)[0];
+            element.name = `words[${wordIndex}][meaning_${posIndex}][]`;
+
+        } else if (/\[meaning_\d+\]\[\]$/.test(name)) {
+            const posIndex = name.match(/meaning_(\d+)/)[1];
+            element.name = `words[${wordIndex}][meaning_${posIndex}][]`;
+        }
+    });
+}
+
+
+// 単語を追加
+function addWord() {
+    const container = document.getElementById("words-container");
+    const original = container.querySelector(".word-block");
+    const newBlock = original.cloneNode(true);
+
+    const wordIndex = wordCount++;
+
+    // 入力内容をリセット
+    newBlock.querySelectorAll("input").forEach(input => {
+        input.value = "";
+        input.readOnly = false;
+        input.disabled = false;
+    });
+
+    newBlock.querySelectorAll("select").forEach(select => {
+        select.selectedIndex = 0;
+        select.disabled = false;
+    });
+
+    // 追加された品詞・意味・構成要素・派生語を初期状態に戻す
+    newBlock.querySelectorAll(".pos-row").forEach((row, index) => {
+        if (index > 0) row.remove();
+    });
+
+    newBlock.querySelectorAll(".meaning-row").forEach((row, index) => {
+        if (index > 0) row.remove();
+    });
+
+    newBlock.querySelectorAll(".part-row").forEach((row, index) => {
+        if (index > 0) row.remove();
+    });
+
+    newBlock.querySelectorAll(".derivative-row").forEach(row => row.remove());
+
+    setupWord(newBlock, wordIndex);
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.textContent = "この単語を削除";
+    removeButton.onclick = () => newBlock.remove();
+    newBlock.appendChild(removeButton);
+
+    container.appendChild(newBlock);
+}
+
+// 意味を追加
+function addMeaning(button) {
+    const posRow = button.closest(".pos-row");
+    const container = posRow.querySelector(".meanings-container");
+    const name = container.querySelector("input").name;
+
+    const row = document.createElement("div");
+    row.className = "meaning-row";
+    row.innerHTML = `
+        <input type="text" name="${name}" placeholder="意味">
+        <button type="button" onclick="this.parentElement.remove()">削除</button>
+    `;
+    container.appendChild(row);
+}
+
+// 品詞を追加
+function addPOS(button) {
+    const block = button.closest(".word-block");
+    const container = block.querySelector(".pos-container");
+    const wordIndex = block.dataset.wordIndex;
+    const posIndex = posCount++;
+
+    const row = document.createElement("div");
+    row.className = "pos-row";
+
+    row.innerHTML = `
+        <hr>
+        <label>品詞</label>
+        <select name="words[${wordIndex}][pos_${posIndex}]">
+            <option value="verb">動詞</option>
+            <option value="noun">名詞</option>
+            <option value="adjective">形容詞</option>
+            <option value="adverb">副詞</option>
+        </select>
+
+        <div class="meanings-container">
+            <div class="meaning-row">
+                <input type="text"
+                       name="words[${wordIndex}][meaning_${posIndex}][]"
+                       placeholder="意味">
+            </div>
+        </div>
+
+        <button type="button" onclick="addMeaning(this)">＋ 意味を追加</button>
+        <button type="button" onclick="this.parentElement.remove()">品詞を削除</button>
+    `;
+
+    container.appendChild(row);
+}
+
+// 語の構成を追加
+function addPart(button) {
+    const block = button.closest(".word-block");
+    const container = block.querySelector(".parts-container");
+    const wordIndex = block.dataset.wordIndex;
+
+    const row = document.createElement("div");
+    row.className = "part-row";
+    row.innerHTML = `
+        <label>構成要素</label>
+        <input type="text" name="words[${wordIndex}][part_form][]">
+        <label>意味</label>
+        <input type="text" name="words[${wordIndex}][part_meaning][]">
+        <button type="button" onclick="this.parentElement.remove()">削除</button>
+    `;
+    container.appendChild(row);
+}
+
+// 派生語を追加
+function addDerivative(button) {
+    const block = button.closest(".word-block");
+    const container = block.querySelector(".derivatives-container");
+    const wordIndex = block.dataset.wordIndex;
+
+    const row = document.createElement("div");
+    row.className = "derivative-row";
+    row.innerHTML = `
+        <label>派生語</label>
+        <input type="text" name="words[${wordIndex}][derivative_word][]">
+        <label>意味</label>
+        <input type="text" name="words[${wordIndex}][derivative_meaning][]">
+        <button type="button" onclick="this.parentElement.remove()">削除</button>
+    `;
+    container.appendChild(row);
+}
+
+// 最初の単語にも番号を設定
+document.addEventListener("DOMContentLoaded", () => {
+    const firstBlock = document.querySelector(".word-block");
+    setupWord(firstBlock, 0);
+    if (editData) populateEditForm(editData);
+});
+
+// YAMLの内容を既存のフォームへ展開する
+function populateEditForm(data) {
+    for (const field of ["chapter", "prefix", "prefix_meaning", "stack", "main_word"]) {
+        const el = document.getElementById(field);
+        if (el) el.value = data[field] ?? "";
+        if (el && ["chapter", "stack", "main_word"].includes(field)) el.readOnly = true;
+    }
+        // Stackの語根情報を復元
+    const root = data.root || {};
+
+    const rootFormsInput = document.getElementById("root_forms");
+    const rootMeaningsInput = document.getElementById("root_meanings");
+
+    if (rootFormsInput) {
+        rootFormsInput.value = (root.forms || []).join(", ");
+    }
+
+    if (rootMeaningsInput) {
+        rootMeaningsInput.value = (root.meanings || []).join(", ");
+    }
+    const container = document.getElementById("words-container");
+    const first = container.querySelector(".word-block");
+    // 追加時の複製元を空の初期フォームにしておく
+    for (let i = 1; i < (data.words || []).length; i++) addWord();
+    const blocks = [...container.querySelectorAll(".word-block")];
+    (data.words || []).forEach((entry, i) => {
+        const block = blocks[i];
+        if (!block) return;
+        block.querySelector(`[name="words[${i}][word]"]`).value = entry.word || "";
+        block.querySelector(`[name="words[${i}][role]"]`).value = entry.role || "related";
+        if (entry.role === "main") {
+            block.querySelector(`[name="words[${i}][word]"]`).readOnly = true;
+            block.querySelector(`[name="words[${i}][role]"]`).disabled = true;
+            // disabledは送信されないのでhiddenで補う
+            const hidden = document.createElement("input");
+            hidden.type = "hidden"; hidden.name = `words[${i}][role]`; hidden.value = "main";
+            block.appendChild(hidden);
+        }
+        const posEntries = Object.entries(entry.meanings || {});
+        const posButton = [...block.querySelectorAll("button")].find(b => b.getAttribute("onclick") === "addPOS(this)");
+        const rows = block.querySelectorAll(".pos-row");
+        if (posEntries.length === 0) {
+            rows[0].querySelector("input").value = "";
+        }
+        posEntries.forEach(([pos, meanings], j) => {
+            if (j > 0) addPOS(posButton);
+            const row = block.querySelectorAll(".pos-row")[j];
+            row.querySelector("select").value = pos;
+            const button = [...row.querySelectorAll("button")].find(b => b.getAttribute("onclick") === "addMeaning(this)");
+            (meanings || []).forEach((meaning, k) => {
+                if (k > 0) addMeaning(button);
+                row.querySelectorAll(".meaning-row input")[k].value = meaning;
+            });
+        });
+        const partButton = [...block.querySelectorAll("button")].find(b => b.getAttribute("onclick") === "addPart(this)");
+        (entry.parts || []).forEach((part, j) => {
+            if (j > 0) addPart(partButton);
+            const inputs = block.querySelectorAll(".part-row")[j].querySelectorAll("input");
+            inputs[0].value = part.form || "";
+            inputs[1].value = part.meaning || "";
+        });
+        const derivativeButton = [...block.querySelectorAll("button")].find(b => b.getAttribute("onclick") === "addDerivative(this)");
+        (entry.derivatives || []).forEach(d => {
+            addDerivative(derivativeButton);
+            const row = block.querySelector(".derivatives-container .derivative-row:last-child");
+            const inputs = row.querySelectorAll("input");
+            inputs[0].value = d.word || "";
+            inputs[1].value = d.meaning || "";
+        });
+    });
+}
+
+</script>
+
+
+
+<!-- chapter-tabs-enhancement -->
+<style>
+  .chapter-tab-bar { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
+  .chapter-tab-button { border: 1px solid #b8c8e5; border-radius: 9px; background: #fff;
+    color: #174bd3; padding: 10px 18px; cursor: pointer; font: inherit; font-weight: 600; }
+  .chapter-tab-button:hover { background: #eaf0ff; }
+  .chapter-tab-button.active { background: #174bd3; color: #fff; border-color: #174bd3; }
+  .chapter-tab-count { margin-left: 6px; font-size: .85em; opacity: .8; }
+  .chapter-tab-status { margin: 0 0 12px; color: #43516b; }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const list = document.querySelector('.stack-list');
+  if (!list) return;
+  const items = Array.from(list.querySelectorAll(':scope > li'));
+  const chapterItems = new Map();
+  for (const item of items) {
+    const link = item.querySelector('a');
+    const match = link && link.textContent.match(/Chapter\s*(\d+)/i);
+    if (!match) continue;
+    const chapter = Number(match[1]);
+    if (!chapterItems.has(chapter)) chapterItems.set(chapter, []);
+    chapterItems.get(chapter).push(item);
+  }
+  if (!chapterItems.size) return;
+  const bar = document.createElement('div');
+  bar.className = 'chapter-tab-bar';
+  bar.setAttribute('role', 'group');
+  bar.setAttribute('aria-label', 'Chapterの切り替え');
+  const status = document.createElement('p');
+  status.className = 'chapter-tab-status';
+  list.parentNode.insertBefore(bar, list);
+  list.parentNode.insertBefore(status, list);
+  const buttons = new Map();
+  function showChapter(chapter) {
+    for (const [number, entries] of chapterItems) {
+      for (const item of entries) item.hidden = number !== chapter;
+    }
+    for (const [number, button] of buttons) {
+      const active = number === chapter;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    }
+    status.textContent = `Chapter ${chapter}：${chapterItems.get(chapter).length} Stack`;
+  }
+  for (const chapter of Array.from(chapterItems.keys()).sort((a,b) => a-b)) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'chapter-tab-button';
+    button.textContent = `Chapter ${chapter}`;
+    const count = document.createElement('span');
+    count.className = 'chapter-tab-count';
+    count.textContent = `(${chapterItems.get(chapter).length})`;
+    button.appendChild(count);
+    button.addEventListener('click', () => showChapter(chapter));
+    bar.appendChild(button);
+    buttons.set(chapter, button);
+  }
+  const current = new URLSearchParams(location.search).get('file');
+  const currentMatch = current && current.match(/chapter_(\d+)_/);
+  const initial = currentMatch ? Number(currentMatch[1]) : Math.min(...chapterItems.keys());
+  showChapter(chapterItems.has(initial) ? initial : Math.min(...chapterItems.keys()));
+});
+</script>
+
+
+<script>
+(() => {
+    const SESSION_KEY = "registration_session_id";
+    const LAST_SEEN_KEY = "registration_last_seen";
+
+    const now = Date.now();
+    const lastSeen = Number(sessionStorage.getItem(LAST_SEEN_KEY) || 0);
+
+    // 30分以上空いた場合は新しい利用セッション
+    let sessionId = sessionStorage.getItem(SESSION_KEY);
+
+    if (!sessionId || now - lastSeen > 30 * 60 * 1000) {
+        sessionId = crypto.randomUUID();
+        sessionStorage.setItem(SESSION_KEY, sessionId);
+    }
+
+    sessionStorage.setItem(LAST_SEEN_KEY, String(now));
+
+    let visibleSeconds = 0;
+    let activeSeconds = 0;
+    let lastActivity = Date.now();
+
+
+    // 登録・編集フォームだけを計測対象にする
+    const form = document.getElementById("vocab-editor-form");
+    const activityType = form.dataset.activityType;
+
+    let hasStartedEditing = false;
+
+    const markActivity = () => {
+        lastActivity = Date.now();
+        hasStartedEditing = true;
+    };
+
+    ["click", "keydown", "input", "change"].forEach(eventName => {
+        form.addEventListener(eventName, markActivity);
+    });
+
+
+    // 10秒ごとに滞在時間と推定操作時間を計測
+    setInterval(() => {
+        if (document.visibilityState !== "visible") return;
+
+        // フォームの操作開始前は計測しない
+        if (!hasStartedEditing) return;
+
+        visibleSeconds += 10;
+
+        // 最後の操作から60秒以内なら活動中と推定
+        if (hasStartedEditing && Date.now() - lastActivity <= 60000) {
+            activeSeconds += 10;
+        }
+
+        sessionStorage.setItem(LAST_SEEN_KEY, String(Date.now()));
+    }, 10000);
+
+    // 前回送信後に増えた時間だけを記録
+    let sentVisibleSeconds = 0;
+    let sentActiveSeconds = 0;
+
+    // 未送信データを保存するキー
+    const PENDING_USAGE_KEY = "pending_registration_usage";
+
+    // 保存済みの未送信データを復元
+    let pendingUsage = null;
+
+    try {
+        const savedUsage = sessionStorage.getItem(PENDING_USAGE_KEY);
+        if (savedUsage) {
+            pendingUsage = JSON.parse(savedUsage);
+        }
+    } catch (error) {
+        console.error("利用時間データの復元エラー:", error);
+        sessionStorage.removeItem(PENDING_USAGE_KEY);
+    }
+
+    let isSending = false;
+
+    const sendUsage = () => {
+        if (isSending) return;
+        if (!hasStartedEditing && !pendingUsage) return;
+
+        // 送信待ちデータの時間を除いて、新しい時間を計算
+        const pendingVisible = (
+            pendingUsage &&
+            pendingUsage.event_id === currentPageEventId
+        ) ? pendingUsage.visible_seconds : 0;
+
+        const pendingActive = (
+            pendingUsage &&
+            pendingUsage.event_id === currentPageEventId
+        ) ? pendingUsage.active_seconds : 0;
+
+        const deltaVisible = Math.max(
+            0,
+            visibleSeconds - sentVisibleSeconds - pendingVisible
+        );
+
+        const deltaActive = Math.max(
+            0,
+            activeSeconds - sentActiveSeconds - pendingActive
+        );
+
+        if (!pendingUsage && deltaVisible <= 0) return;
+
+        if (!pendingUsage) {
+            pendingUsage = {
+                session_id: sessionId,
+                event_id: crypto.randomUUID(),
+                activity_type: activityType,
+                visible_seconds: deltaVisible,
+                active_seconds: deltaActive
+            };
+
+            currentPageEventId = pendingUsage.event_id;
+
+            sessionStorage.setItem(
+                PENDING_USAGE_KEY,
+                JSON.stringify(pendingUsage)
+            );
+        }
+
+        const payload = pendingUsage;
+
+        // このページで作成したデータかを判別
+        const isCurrentPageUsage =
+            payload.event_id === currentPageEventId;
+
+        isSending = true;
+
+        fetch("/api/usage", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload),
+            keepalive: true
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("利用時間の保存に失敗");
+            }
+
+            if (isCurrentPageUsage) {
+                sentVisibleSeconds += payload.visible_seconds;
+                sentActiveSeconds += payload.active_seconds;
+            }
+
+            sessionStorage.removeItem(PENDING_USAGE_KEY);
+            pendingUsage = null;
+        })
+        .catch(error => {
+            console.error("利用時間の送信エラー:", error);
+        })
+        .finally(() => {
+            isSending = false;
+        });
+    };
+
+    // このページで新しく作成したイベントを識別
+    let currentPageEventId = null;
+
+    // 既存の送信処理で新規データを作成した際にIDを設定する
+    // ※新規作成部分で currentPageEventId = pendingUsage.event_id; を追加
+
+    if (pendingUsage) {
+        sendUsage();
+    }
+
+    setInterval(sendUsage, 30000);
+    window.addEventListener("pagehide", sendUsage);
+
+})();
+
+</script>
+
+
+</body>
+</html>
+

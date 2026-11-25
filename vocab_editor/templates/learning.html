@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>学習記録</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background: #f7f8fa;
+            color: #334155;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 24px;
+        }
+
+        h1 {
+            color: #1e3a5f;
+        }
+
+        .section {
+            background: white;
+            padding: 24px;
+            margin-bottom: 24px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: #eff6ff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .stat-value {
+            color: #2563eb;
+            font-size: 32px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            background: #e2e8f0;
+            height: 16px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: #2563eb;
+            height: 100%;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .chart-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            min-width: 0;
+        }
+        .tab-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 24px 0;
+        }
+
+        .tab-buttons button {
+            flex: 1;
+            padding: 15px 20px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            background: white;
+            color: #334155;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .tab-buttons button:hover {
+            background: #e0ecff;
+        }
+
+        .tab-buttons button.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+        .chart-card {
+            max-width: 800px;
+            margin: 16px auto;
+        }
+
+        .chart-card canvas {
+            max-height: 300px;
+        }
+        .quiz-tab-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .quiz-tab-buttons button {
+            padding: 12px 20px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: white;
+            color: #334155;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .quiz-tab-buttons button:hover {
+            background: #e0ecff;
+        }
+
+        .quiz-tab-buttons button.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .period-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .period-buttons button {
+            padding: 10px 20px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .period-buttons button.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .period-buttons[hidden] {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'nav.html' %}
+
+    <main>
+        <h1>学習記録</h1>
+        <p>教材の登録状況やテスト成績から、学習の進捗を確認できます。</p>
+        <div class="tab-buttons">
+        <button type="button" class="active"
+                data-target="vocabulary-status">教材登録状況</button>
+
+        <button type="button"
+                data-target="registration-history">登録履歴</button>
+
+        <button type="button"
+                data-target="learning-time">学習時間</button>
+
+        <button type="button"
+                data-target="quiz-history">テスト成績</button>
+        <button type="button"
+                data-target="network-history">語源ネットワーク</button>
+    </div>
+    <div class="period-buttons" id="period-buttons">
+        <button type="button" data-period="7"
+            class="{{ 'active' if period == '7' else '' }}">
+            直近7日間
+        </button>
+
+        <button type="button" data-period="30"
+            class="{{ 'active' if period == '30' else '' }}">
+            直近30日間
+        </button>
+
+        <button type="button" data-period="all"
+            class="{{ 'active' if period == 'all' else '' }}">
+            全期間
+        </button>
+    </div>
+
+        <section class="section" id="vocabulary-status">
+            <h2>教材登録状況</h2>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">登録済みChapter</div>
+                    <div class="stat-value">{{ vocabulary.chapters }}</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">登録済みStack</div>
+                    <div class="stat-value">{{ vocabulary.stacks }}</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">登録済み単語</div>
+                    <div class="stat-value">{{ vocabulary.total }}語</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">確認済み単語</div>
+                    <div class="stat-value">{{ vocabulary.verified }}語</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">未確認単語</div>
+                    <div class="stat-value">{{ vocabulary.unverified }}語</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">誤答集の単語</div>
+                    <div class="stat-value">{{ incorrect_count }}語</div>
+                </div>
+            </div>
+
+            <h3>教材確認率：{{ vocabulary.verification_rate }}%</h3>
+
+            <div class="progress-bar">
+                <div class="progress-fill"
+                     style="width: {{ vocabulary.verification_rate }}%;">
+                </div>
+            </div>
+
+            <p>{{ vocabulary.verified }} / {{ vocabulary.total }} 語</p>
+        </section>
+
+        <section class="section" id="registration-history">
+            <h2>教材登録履歴</h2>
+
+            <div class="chart-card">
+                <h3>日別の教材登録・確認数</h3>
+                <canvas id="registrationChart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <h3>日別の編集・削除数</h3>
+                <canvas id="editChart"></canvas>
+            </div>
+        </section>
+
+        <section class="section" id="learning-time">
+            <h2>学習時間</h2>
+
+            <div class="chart-card">
+                <h3>日別の教材登録時間</h3>
+                <canvas id="usageChart"></canvas>
+                <p>操作時間は、直近60秒以内に操作があった時間の推定値です。</p>
+            </div>
+        </section>
+
+        <section class="section" id="quiz-history">
+            <h2>テスト成績</h2>
+
+            <div class="quiz-tab-buttons">
+                <button type="button" class="active"
+                        data-chart="accuracyChart">正答率</button>
+
+                <button type="button"
+                        data-chart="answerCountChart">回答数</button>
+
+                <button type="button"
+                        data-chart="responseTimeChart">平均回答時間</button>
+
+                <button type="button"
+                        data-chart="chapterAccuracyChart">Chapter別正答率</button>
+            </div>
+
+            <div class="quiz-chart-area">
+                <div class="chart-card">
+                    <h3>日別の正答率</h3>
+                    <canvas id="accuracyChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <h3>日別の正解数・誤答数</h3>
+                    <canvas id="answerCountChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <h3>平均回答時間の推移</h3>
+                    <canvas id="responseTimeChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <h3>Chapter別の正答率</h3>
+                    <canvas id="chapterAccuracyChart"></canvas>
+                </div>
+            </div>
+            </section>
+        
+        <section class="section" id="network-history">
+            <h2>語源ネットワーク利用状況</h2>
+
+            <div class="chart-card">
+                <h3>日別の利用回数</h3>
+                <canvas id="networkCountChart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <h3>日別の利用時間</h3>
+                <canvas id="networkTimeChart"></canvas>
+                <p>操作時間は、直近60秒以内に操作があった時間の推定値です。</p>
+                <p>テスト内でのネットワーク利用は集計対象外です。</p>
+            </div>
+        </section>
+
+    </main>
+    <script>
+    const registration = {{ registration | tojson }};
+    const registrationDates = Object.keys(registration).sort();
+
+    function registrationValues(key) {
+        return registrationDates.map(date => registration[date][key]);
+    }
+
+    new Chart(document.getElementById('registrationChart'), {
+        type: 'bar',
+        data: {
+            labels: registrationDates,
+            datasets: [
+                {
+                    label: '登録数',
+                    data: registrationValues('registered'),
+                    backgroundColor: '#2563eb'
+                },
+                {
+                    label: '確認数',
+                    data: registrationValues('verified'),
+                    backgroundColor: '#16a34a'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grace: '15%',
+                    ticks: { precision: 0 },
+                    title: { display: true, text: '単語数' }
+                }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('editChart'), {
+        type: 'bar',
+        data: {
+            labels: registrationDates,
+            datasets: [
+                {
+                    label: '編集数',
+                    data: registrationValues('edited'),
+                    backgroundColor: '#f59e0b'
+                },
+                {
+                    label: '削除数',
+                    data: registrationValues('deleted'),
+                    backgroundColor: '#ef4444'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grace: '15%',
+                    ticks: { precision: 0 },
+                    title: { display: true, text: '記録件数' }
+                }
+            }
+        }
+    });
+    const usage = {{ usage | tojson }};
+    const usageDates = Object.keys(usage).sort();
+
+    new Chart(document.getElementById('usageChart'), {
+        type: 'bar',
+        data: {
+            labels: usageDates,
+            datasets: [
+                {
+                    label: '操作時間',
+                    data: usageDates.map(date =>
+                        +(usage[date].active_seconds / 60).toFixed(2)
+                    ),
+                    backgroundColor: '#2563eb'
+                },
+                {
+                    label: '画面表示時間',
+                    data: usageDates.map(date =>
+                        +(usage[date].visible_seconds / 60).toFixed(2)
+                    ),
+                    backgroundColor: '#94a3b8'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grace: '15%',
+                    title: {
+                        display: true,
+                        text: '時間（分）'
+                    }
+                }
+            }
+        }
+    });
+
+    const quiz = {{ quiz | tojson }};
+    const quizDates = Object.keys(quiz.daily).sort();
+
+    const quizChapters = Object.keys(quiz.chapters).sort(
+        (a, b) => Number(a) - Number(b)
+    );
+
+    function quizValues(key) {
+        return quizDates.map(date => quiz.daily[date][key]);
+    }
+
+    function createQuizChart(id, type, labels, datasets, unit, max) {
+        new Chart(document.getElementById(id), {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grace: '15%',
+                        max: max,
+                        title: {
+                            display: true,
+                            text: unit
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 日別正答率
+    createQuizChart(
+        'accuracyChart',
+        'line',
+        quizDates,
+        [{
+            label: '正答率',
+            data: quizValues('accuracy'),
+            borderColor: '#2563eb',
+            backgroundColor: '#2563eb',
+            tension: 0.2
+        }],
+        '正答率（%）',
+        100
+    );
+
+    // 正解数・誤答数
+    createQuizChart(
+        'answerCountChart',
+        'bar',
+        quizDates,
+        [
+            {
+                label: '正解数',
+                data: quizValues('correct'),
+                backgroundColor: '#16a34a'
+            },
+            {
+                label: '誤答数',
+                data: quizValues('incorrect'),
+                backgroundColor: '#ef4444'
+            }
+        ],
+        '回答数'
+    );
+
+    // 平均回答時間
+    createQuizChart(
+        'responseTimeChart',
+        'line',
+        quizDates,
+        [{
+            label: '平均回答時間',
+            data: quizValues('average_time'),
+            borderColor: '#f59e0b',
+            backgroundColor: '#f59e0b',
+            tension: 0.2
+        }],
+        '時間（秒）'
+    );
+
+    // Chapter別正答率
+    createQuizChart(
+        'chapterAccuracyChart',
+        'bar',
+        quizChapters.map(chapter => `Chapter ${chapter}`),
+        [{
+            label: '正答率',
+            data: quizChapters.map(
+                chapter => quiz.chapters[chapter].accuracy
+            ),
+            backgroundColor: '#2563eb'
+        }],
+        '正答率（%）',
+        100
+    );
+    const network = {{ network | tojson }};
+    const networkDates = Object.keys(network).sort();
+
+    new Chart(document.getElementById('networkCountChart'), {
+        type: 'bar',
+        data: {
+            labels: networkDates,
+            datasets: [{
+                label: '利用回数',
+                data: networkDates.map(date =>
+                    network[date].open_count
+                ),
+                backgroundColor: '#2563eb'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grace: '15%',
+                    ticks: { precision: 0 },
+                    title: { display: true, text: '回数' }
+                }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('networkTimeChart'), {
+        type: 'bar',
+        data: {
+            labels: networkDates,
+            datasets: [
+                {
+                    label: '操作時間',
+                    data: networkDates.map(date =>
+                        +(network[date].active_seconds / 60).toFixed(2)
+                    ),
+                    backgroundColor: '#2563eb'
+                },
+                {
+                    label: '画面表示時間',
+                    data: networkDates.map(date =>
+                        +(network[date].visible_seconds / 60).toFixed(2)
+                    ),
+                    backgroundColor: '#94a3b8'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grace: '15%',
+                    title: { display: true, text: '時間（分）' }
+                }
+            }
+        }
+    });
+
+    const tabButtons = document.querySelectorAll('.tab-buttons button');
+    const learningSections = document.querySelectorAll('main > .section');
+
+    function showSection(target) {
+        document.getElementById('period-buttons').hidden =
+        target === 'vocabulary-status';
+        learningSections.forEach(section => {
+            section.hidden = section.id !== target;
+        });
+
+        tabButtons.forEach(button => {
+            button.classList.toggle(
+                'active',
+                button.dataset.target === target
+            );
+        });
+
+        requestAnimationFrame(() => {
+            const section = document.getElementById(target);
+
+            section.querySelectorAll('canvas').forEach(canvas => {
+                const chart = Chart.getChart(canvas);
+
+                if (chart) {
+                    chart.resize();
+                }
+            });
+        });
+    }
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            showSection(button.dataset.target);
+        });
+    });
+
+    const params = new URLSearchParams(window.location.search);
+
+    const initialSection = params.get('section') || 'vocabulary-status';
+
+    showSection(
+        Array.from(learningSections).some(
+            section => section.id === initialSection
+        ) ? initialSection : 'vocabulary-status'
+    );
+    const quizTabButtons = document.querySelectorAll(
+        '.quiz-tab-buttons button'
+    );
+
+    const quizChartCards = document.querySelectorAll(
+        '.quiz-chart-area .chart-card'
+    );
+
+    function showQuizChart(target) {
+        quizChartCards.forEach(card => {
+            const canvas = card.querySelector('canvas');
+            card.hidden = canvas.id !== target;
+        });
+
+        quizTabButtons.forEach(button => {
+            button.classList.toggle(
+                'active',
+                button.dataset.chart === target
+            );
+        });
+
+        requestAnimationFrame(() => {
+            const chart = Chart.getChart(target);
+
+            if (chart) {
+                chart.resize();
+            }
+        });
+    }
+
+    quizTabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            showQuizChart(button.dataset.chart);
+        });
+    });
+
+    showQuizChart(
+        params.get('chart') || 'accuracyChart'
+    );
+
+    document.querySelectorAll('.period-buttons button').forEach(button => {
+        button.addEventListener('click', () => {
+            const activeTab = document.querySelector('.tab-buttons button.active');
+            const activeQuizTab = document.querySelector('.quiz-tab-buttons button.active');
+
+            const url = new URL(window.location.href);
+
+            url.searchParams.set('period', button.dataset.period);
+            url.searchParams.set('section', activeTab.dataset.target);
+
+            if (activeQuizTab) {
+                url.searchParams.set('chart', activeQuizTab.dataset.chart);
+            }
+
+            window.location.href = url.toString();
+        });
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学習者IDの登録</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f5f7fb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            width: 360px;
+            max-width: calc(100% - 48px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            font-size: 22px;
+        }
+
+        input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            margin: 12px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .error {
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>学習者IDの登録</h1>
+
+        <p>配布された学習者IDを入力してください。</p>
+
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST">
+            <input
+                type="text"
+                name="learner_id"
+                placeholder="例：user001"
+                value="{{ learner_id or '' }}"
+                required
+            >
+
+            <button type="submit">登録する</button>
+        </form>
+    </div>
+</body>
+</html>
